@@ -9,83 +9,88 @@ public class Main {
 	public static int limit = 0;
 	public static int[][] sites;
 	public static HashSet<Integer> unused;
-	public static int start;
 	public static double[] bestWays;
 
 	public static void main(String[] args) throws IOException {
 //		System.setIn(new FileInputStream("./src/test/pub01.in"));
 		read();
 		bestWays = new double[count];
-		for (int i = 0; i < count; i++) {
-			start = i;
-			work((HashSet<Integer>) unused.clone(), new int[count], i, 0, 0);
+		int[] way = new int[count];
+		int indexOfLastInserted = 0;
+		for (int i = 0; i < count - 1; i++) {
 			unused.remove(i);
+			way[indexOfLastInserted] = i;
+			work((HashSet<Integer>) unused.clone(), way, 0, indexOfLastInserted);
 			if (bestWays[unused.size()] > 0) {
 				System.out.println((int)Math.ceil(bestWays[unused.size()]));
-				break;
+				System.exit(0);
 			}
 		}
 	}
 
-	public static void work(HashSet<Integer> array, int[] used, int site, double length, int depth) {
-		array.remove(site);
-		used[depth] = site;
-		int tStart;
-		int tEnd;
-		boolean crossed;
+	public static void work(HashSet<Integer> array, int[] way, double length, int indexOfLastInserted) {
+		HashSet<Integer> candidates = new HashSet<Integer>(array.size() * 2);
+
+		// vybrání možných bodů dále
 		if (!array.isEmpty()) {
-			for (int s : array) {
-				crossed = false;
-				double toNext = getDistance(sites[site], sites[s]);
-				double toHome = getDistance(sites[s], sites[start]);
+			for (int candidate : array) {
+				double toNext = getDistance(sites[way[indexOfLastInserted]], sites[candidate]);
+				double toHome = getDistance(sites[candidate], sites[way[0]]);
+
+				// není delší než povolený limit?
 				if (length + toNext + toHome > limit) {
 					continue;
 				}
-				if (bestWays[unused.size() - 1] > 0 && bestWays[unused.size() - 1] < length + toNext + toHome) {
+
+				// je delší než nejdelší s maximálním počtem vrcholů?
+				if (bestWays[unused.size()] > 0 && bestWays[unused.size()] < length + toNext + toHome) {
 					continue;
 				}
-				tEnd = -1;
-				for (int i = 0; i < depth + 1; i++) {
-					tStart = tEnd;
-					tEnd = used[i];
-					if (tStart == -1) {
-						continue;
-					}
-					if (sites[site][0] == sites[tEnd][0] && sites[site][1] == sites[tEnd][1]) {
-						continue;
-					}
-					if (intersectionFounded(sites[site], sites[s], sites[tStart], sites[tEnd])) {
-						crossed = true;
-						break;
-					}
-				}
-				if (!crossed) {
-					work((HashSet<Integer>)array.clone(), used, s, length + toNext, depth + 1);
-				}
+				candidates.add(candidate);
 			}
 		}
-		tEnd = -1;
-		crossed = false;
-		for (int i = 0; i < depth + 1; i++) {
-			tStart = tEnd;
-			tEnd = used[i];
-			if (tStart == -1) {
-				continue;
+
+		// testování vybraných bodů
+		// pokud je nastaven maximální možný počet vrcholů (> 0) a zároveň je počet použitelných vrcholů + počet použitých menší
+		// než počet maximálního možné počtu vrcholů
+		if (!candidates.isEmpty()) {
+			if (bestWays[unused.size()] > 0) {
+				if (unused.size() != candidates.size() + indexOfLastInserted) {
+					return;
+				}
 			}
-			if (sites[site][0] == sites[tEnd][0] && sites[site][1] == sites[tEnd][1] || sites[start][0] == sites[tStart][0] && sites[start][1] == sites[tStart][1]) {
-				continue;
-			}
-			if (intersectionFounded(sites[site], sites[start], sites[tStart], sites[tEnd])) {
-				crossed = true;
-				break;
-			}
-		}
-		if (!crossed) {
-			double temp = getDistance(sites[site], sites[start]) + length;
-			if (bestWays[depth] == 0) {
-				bestWays[depth] = temp;
-			} else if (temp < bestWays[depth]) {
-				bestWays[depth] = temp;
+			boolean crossed;
+			HashSet<Integer> temp;
+			for (int choosen : candidates) {
+				double toNext = getDistance(sites[way[indexOfLastInserted]], sites[choosen]);
+				double toHome = getDistance(sites[choosen], sites[way[0]]);
+
+				// kříží se to s něčím?
+				// kontroluji až když mám cestu aspon o 1 hraně
+				crossed = false;
+				if (indexOfLastInserted > 0) {
+					for (int i = 1; i < indexOfLastInserted; i++) {
+						if (intersectionFounded(sites[choosen], sites[way[indexOfLastInserted]], sites[way[i]], sites[way[i - 1]])) {
+							crossed = true;
+							break;
+						}
+					}
+				}
+				if (crossed) {
+					continue;
+				}
+
+				// je lepší než zatím nejlepší řešení na dané délce?
+				if (bestWays[indexOfLastInserted + 1] == 0) {
+					bestWays[indexOfLastInserted + 1] = length + toNext + toHome;
+				} else if (bestWays[indexOfLastInserted + 1] > length + toNext + toHome) {
+					bestWays[indexOfLastInserted + 1] = length + toNext + toHome;
+				}
+
+				temp = (HashSet<Integer>)candidates.clone();
+				temp.remove(choosen);
+				way[indexOfLastInserted + 1] = choosen;
+				work(temp, way, length + toNext, indexOfLastInserted + 1);
 			}
 		}
 	}
