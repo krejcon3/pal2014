@@ -41,6 +41,9 @@ public class Main {
 				if (length + toNext + toHome > limit) {
 					continue;
 				}
+				if (bestWays[unused.size() - 1] > 0 && bestWays[unused.size() - 1] < length + toNext + toHome) {
+					continue;
+				}
 				tEnd = -1;
 				for (int i = 0; i < depth + 1; i++) {
 					tStart = tEnd;
