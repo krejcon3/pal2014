@@ -57,7 +57,7 @@ public class Main {
 					}
 				}
 				if (!crossed) {
-					work((HashSet<Integer>)array.clone(), used.clone(), s, length + toNext, depth + 1);
+					work((HashSet<Integer>)array.clone(), used, s, length + toNext, depth + 1);
 				}
 			}
 		}
