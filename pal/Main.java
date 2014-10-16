@@ -10,17 +10,22 @@ public class Main {
 	public static int[][] sites;
 	public static HashSet<Integer> unused;
 	public static double[] bestWays;
+	public static int[] way;
+
+	/**
+	 * co třeba řadit podle vzdálenosti ty kandidáty?
+	 */
 
 	public static void main(String[] args) throws IOException {
 //		System.setIn(new FileInputStream("./src/test/pub01.in"));
 		read();
 		bestWays = new double[count];
-		int[] way = new int[count];
+		way = new int[count];
 		int indexOfLastInserted = 0;
 		for (int i = 0; i < count - 1; i++) {
 			unused.remove(i);
 			way[indexOfLastInserted] = i;
-			work((HashSet<Integer>) unused.clone(), way, 0, indexOfLastInserted);
+			work((HashSet<Integer>) unused.clone(), 0, indexOfLastInserted);
 			if (bestWays[unused.size()] > 0) {
 				System.out.println((int)Math.ceil(bestWays[unused.size()]));
 				System.exit(0);
@@ -28,8 +33,9 @@ public class Main {
 		}
 	}
 
-	public static void work(HashSet<Integer> array, int[] way, double length, int indexOfLastInserted) {
+	public static void work(HashSet<Integer> array, double length, int indexOfLastInserted) {
 		HashSet<Integer> candidates = new HashSet<Integer>(array.size() * 2);
+		int size = unused.size();
 
 		// vybrání možných bodů dále
 		if (!array.isEmpty()) {
@@ -43,7 +49,7 @@ public class Main {
 				}
 
 				// je delší než nejdelší s maximálním počtem vrcholů?
-				if (bestWays[unused.size()] > 0 && bestWays[unused.size()] < length + toNext + toHome) {
+				if (bestWays[size] > 0 && bestWays[size] < length + toNext + toHome) {
 					continue;
 				}
 				candidates.add(candidate);
@@ -54,8 +60,8 @@ public class Main {
 		// pokud je nastaven maximální možný počet vrcholů (> 0) a zároveň je počet použitelných vrcholů + počet použitých menší
 		// než počet maximálního možné počtu vrcholů
 		if (!candidates.isEmpty()) {
-			if (bestWays[unused.size()] > 0) {
-				if (unused.size() != candidates.size() + indexOfLastInserted) {
+			if (bestWays[size] > 0) {
+				if (size != candidates.size() + indexOfLastInserted) {
 					return;
 				}
 			}
@@ -90,7 +96,7 @@ public class Main {
 				temp = (HashSet<Integer>)candidates.clone();
 				temp.remove(choosen);
 				way[indexOfLastInserted + 1] = choosen;
-				work(temp, way, length + toNext, indexOfLastInserted + 1);
+				work(temp, length + toNext, indexOfLastInserted + 1);
 			}
 		}
 	}
