@@ -1,82 +1,67 @@
 package pal;
 
 import java.io.*;
-import java.util.HashSet;
 import java.util.StringTokenizer;
 
 public class Main {
 	public static int count = 0;
 	public static int limit = 0;
 	public static int[][] sites;
-	public static HashSet<Integer> unused;
 	public static double[] bestWays;
 	public static int[] way;
-
-	/**
-	 * co třeba řadit podle vzdálenosti ty kandidáty?
-	 */
+	public static int[] toUse;
 
 	public static void main(String[] args) throws IOException {
-//		System.setIn(new FileInputStream("./src/test/pub01.in"));
+		System.setIn(new FileInputStream("./src/test/pub01.in"));
 		read();
 		bestWays = new double[count];
 		way = new int[count];
 		int indexOfLastInserted = 0;
 		for (int i = 0; i < count - 1; i++) {
-			unused.remove(i);
+			toUse[i]++;
 			way[indexOfLastInserted] = i;
-			work((HashSet<Integer>) unused.clone(), 0, indexOfLastInserted);
-			if (bestWays[unused.size()] > 0) {
-				System.out.println((int)Math.ceil(bestWays[unused.size()]));
+			work(0, indexOfLastInserted, count - i - 1);
+			if (bestWays[count - i - 1] > 0) {
+				System.out.println((int)Math.ceil(bestWays[count - i - 1]));
 				System.exit(0);
 			}
 		}
 	}
 
-	public static void work(HashSet<Integer> array, double length, int indexOfLastInserted) {
-		HashSet<Integer> candidates = new HashSet<Integer>(array.size() * 2);
-		int size = unused.size();
-
-		// vybrání možných bodů dále
-		if (!array.isEmpty()) {
-			for (int candidate : array) {
-				double toNext = getDistance(sites[way[indexOfLastInserted]], sites[candidate]);
-				double toHome = getDistance(sites[candidate], sites[way[0]]);
-
-				// není delší než povolený limit?
-				if (length + toNext + toHome > limit) {
+	public static void work(double length, int indexOfLastInserted, int maxSize) {
+		int countToBeUsed = 0;
+		for (int index = 0; index < toUse.length; index++) {
+			if (toUse[index] == 0) {
+				double toNext = getDistance(sites[way[indexOfLastInserted]], sites[index]);
+				double toHome = getDistance(sites[index], sites[way[0]]);
+				if (length + toNext + toHome > limit || bestWays[maxSize] > 0 && bestWays[maxSize] < length + toNext + toHome) {
+					toUse[index]++;
 					continue;
 				}
-
-				// je delší než nejdelší s maximálním počtem vrcholů?
-				if (bestWays[size] > 0 && bestWays[size] < length + toNext + toHome) {
-					continue;
-				}
-				candidates.add(candidate);
+				countToBeUsed++;
+			} else {
+				toUse[index]++;
 			}
 		}
-
-		// testování vybraných bodů
-		// pokud je nastaven maximální možný počet vrcholů (> 0) a zároveň je počet použitelných vrcholů + počet použitých menší
-		// než počet maximálního možné počtu vrcholů
-		if (!candidates.isEmpty()) {
-			if (bestWays[size] > 0) {
-				if (size != candidates.size() + indexOfLastInserted) {
-					return;
+		if (bestWays[maxSize] > 0) {
+			if (maxSize != countToBeUsed + indexOfLastInserted) {
+				for (int index = 0; index < toUse.length; index++) {
+					if (toUse[index] != 0) {
+						toUse[index]--;
+					}
 				}
+				return;
 			}
-			boolean crossed;
-			HashSet<Integer> temp;
-			for (int choosen : candidates) {
-				double toNext = getDistance(sites[way[indexOfLastInserted]], sites[choosen]);
-				double toHome = getDistance(sites[choosen], sites[way[0]]);
-
-				// kříží se to s něčím?
-				// kontroluji až když mám cestu aspon o 1 hraně
+		}
+		boolean crossed;
+		for (int index = 0; index < toUse.length; index++) {
+			if (toUse[index] == 0) {
+				double toNext = getDistance(sites[way[indexOfLastInserted]], sites[index]);
+				double toHome = getDistance(sites[index], sites[way[0]]);
 				crossed = false;
 				if (indexOfLastInserted > 0) {
 					for (int i = 1; i < indexOfLastInserted; i++) {
-						if (intersectionFounded(sites[choosen], sites[way[indexOfLastInserted]], sites[way[i]], sites[way[i - 1]])) {
+						if (intersectionFounded(sites[index], sites[way[indexOfLastInserted]], sites[way[i]], sites[way[i - 1]])) {
 							crossed = true;
 							break;
 						}
@@ -85,18 +70,20 @@ public class Main {
 				if (crossed) {
 					continue;
 				}
-
-				// je lepší než zatím nejlepší řešení na dané délce?
 				if (bestWays[indexOfLastInserted + 1] == 0) {
 					bestWays[indexOfLastInserted + 1] = length + toNext + toHome;
 				} else if (bestWays[indexOfLastInserted + 1] > length + toNext + toHome) {
 					bestWays[indexOfLastInserted + 1] = length + toNext + toHome;
 				}
-
-				temp = (HashSet<Integer>)candidates.clone();
-				temp.remove(choosen);
-				way[indexOfLastInserted + 1] = choosen;
-				work(temp, length + toNext, indexOfLastInserted + 1);
+				toUse[index]++;
+				way[indexOfLastInserted + 1] = index;
+				work(length + toNext, indexOfLastInserted + 1, maxSize);
+				toUse[index]--;
+			}
+		}
+		for (int index = 0; index < toUse.length; index++) {
+			if (toUse[index] != 0) {
+				toUse[index]--;
 			}
 		}
 	}
@@ -115,13 +102,13 @@ public class Main {
 			limit = Integer.parseInt(st.nextToken());
 		}
 		sites = new int[count][2];
-		unused = new HashSet<Integer>(2 * count);
+		toUse = new int[count];
 		int c = 0;
 		while ((line = br.readLine()) != null) {
 			st = new StringTokenizer(line);
 			sites[c][0] = Integer.parseInt(st.nextToken());
 			sites[c][1] = Integer.parseInt(st.nextToken());
-			unused.add(c++);
+			toUse[c++] = 0;
 		}
 	}
 
