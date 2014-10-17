@@ -12,7 +12,7 @@ public class Main {
 	public static int[] toUse;
 
 	public static void main(String[] args) throws IOException {
-		System.setIn(new FileInputStream("./src/test/pub01.in"));
+//		System.setIn(new FileInputStream("./src/test/pub01.in"));
 		read();
 		bestWays = new double[count];
 		way = new int[count];
@@ -30,38 +30,29 @@ public class Main {
 
 	public static void work(double length, int indexOfLastInserted, int maxSize) {
 		int countToBeUsed = 0;
-		for (int index = 0; index < toUse.length; index++) {
-			if (toUse[index] == 0) {
-				double toNext = getDistance(sites[way[indexOfLastInserted]], sites[index]);
-				double toHome = getDistance(sites[index], sites[way[0]]);
-				if (length + toNext + toHome > limit || bestWays[maxSize] > 0 && bestWays[maxSize] < length + toNext + toHome) {
-					toUse[index]++;
-					continue;
-				}
-				countToBeUsed++;
-			} else {
-				toUse[index]++;
-			}
-		}
-		if (bestWays[maxSize] > 0) {
-			if (maxSize != countToBeUsed + indexOfLastInserted) {
-				for (int index = 0; index < toUse.length; index++) {
-					if (toUse[index] != 0) {
-						toUse[index]--;
-					}
-				}
-				return;
-			}
-		}
 		boolean crossed;
 		for (int index = 0; index < toUse.length; index++) {
 			if (toUse[index] == 0) {
+				crossed = false;
 				double toNext = getDistance(sites[way[indexOfLastInserted]], sites[index]);
 				double toHome = getDistance(sites[index], sites[way[0]]);
-				crossed = false;
+				if (length + toNext + toHome > limit || bestWays[maxSize] > 0 && bestWays[maxSize] < length + toNext + toHome) {
+					if (bestWays[maxSize] > 0) {
+						if (maxSize != countToBeUsed + indexOfLastInserted) {
+							for (int i = 0; i < index; i++) {
+								if (toUse[i] != 0) {
+									toUse[i]--;
+								}
+							}
+							return;
+						}
+					}
+					toUse[index]++;
+					continue;
+				}
 				if (indexOfLastInserted > 0) {
 					for (int i = 1; i < indexOfLastInserted; i++) {
-						if (intersectionFounded(sites[index], sites[way[indexOfLastInserted]], sites[way[i]], sites[way[i - 1]])) {
+						if (linesIntersect(sites[index][0], sites[index][1], sites[way[indexOfLastInserted]][0], sites[way[indexOfLastInserted]][1], sites[way[i]][0], sites[way[i]][1], sites[way[i - 1]][0], sites[way[i - 1]][1])) {
 							crossed = true;
 							break;
 						}
@@ -79,6 +70,10 @@ public class Main {
 				way[indexOfLastInserted + 1] = index;
 				work(length + toNext, indexOfLastInserted + 1, maxSize);
 				toUse[index]--;
+
+				countToBeUsed++;
+			} else {
+				toUse[index]++;
 			}
 		}
 		for (int index = 0; index < toUse.length; index++) {
@@ -110,10 +105,6 @@ public class Main {
 			sites[c][1] = Integer.parseInt(st.nextToken());
 			toUse[c++] = 0;
 		}
-	}
-
-	public static boolean intersectionFounded(int[] a1, int[] a2, int[] b1, int[] b2) {
-		return linesIntersect(a1[0], a1[1], a2[0], a2[1], b1[0], b1[1], b2[0], b2[1]);
 	}
 
 	// http://www.java-gaming.org/index.php?topic=22590.0
