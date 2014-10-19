@@ -50,21 +50,30 @@ public class Main {
 					toUse[index]++;
 					continue;
 				}
-				if (indexOfLastInserted > 0) {
+				if (indexOfLastInserted > 1) {
 					for (int i = 1; i < indexOfLastInserted; i++) {
 						if (linesIntersect(sites[index][0], sites[index][1], sites[way[indexOfLastInserted]][0], sites[way[indexOfLastInserted]][1], sites[way[i]][0], sites[way[i]][1], sites[way[i - 1]][0], sites[way[i - 1]][1])) {
 							crossed = true;
 							break;
 						}
 					}
+					if (crossed) {
+						continue;
+					}
+					for (int i = 2; i < indexOfLastInserted; i++) {
+						if (linesIntersect(sites[index][0], sites[index][1], sites[way[0]][0], sites[way[0]][1], sites[way[i]][0], sites[way[i]][1], sites[way[i - 1]][0], sites[way[i - 1]][1])) {
+							crossed = true;
+							break;
+						}
+					}
 				}
-				if (crossed) {
-					continue;
-				}
-				if (bestWays[indexOfLastInserted + 1] == 0) {
-					bestWays[indexOfLastInserted + 1] = length + toNext + toHome;
-				} else if (bestWays[indexOfLastInserted + 1] > length + toNext + toHome) {
-					bestWays[indexOfLastInserted + 1] = length + toNext + toHome;
+
+				if (!crossed) {
+					if (bestWays[indexOfLastInserted + 1] == 0) {
+						bestWays[indexOfLastInserted + 1] = length + toNext + toHome;
+					} else if (bestWays[indexOfLastInserted + 1] > length + toNext + toHome) {
+						bestWays[indexOfLastInserted + 1] = length + toNext + toHome;
+					}
 				}
 				toUse[index]++;
 				way[indexOfLastInserted + 1] = index;
@@ -98,12 +107,11 @@ public class Main {
 		}
 		sites = new int[count][2];
 		toUse = new int[count];
-		int c = 0;
-		while ((line = br.readLine()) != null) {
-			st = new StringTokenizer(line);
-			sites[c][0] = Integer.parseInt(st.nextToken());
-			sites[c][1] = Integer.parseInt(st.nextToken());
-			toUse[c++] = 0;
+		for (int i = 0; i < count; i++) {
+			st = new StringTokenizer(br.readLine());
+			sites[i][0] = Integer.parseInt(st.nextToken());
+			sites[i][1] = Integer.parseInt(st.nextToken());
+			toUse[i] = 0;
 		}
 	}
 
