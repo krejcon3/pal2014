@@ -1,7 +1,7 @@
 package pal;
 
 import java.io.*;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.StringTokenizer;
 
 public class Main {
@@ -23,19 +23,33 @@ public class Main {
 	}
 
 	public static int[] lastDijkstra(int start) {
-		int[] distances = new int[reducated.length];
-		LinkedList<City> queve = new LinkedList<City>();
-		queve.add(reducated[start]);
-		City actual;
-		while (!queve.isEmpty()) {
-			actual = queve.poll();
+		int[] distances = new int[M + N];
+		boolean[] closed = new boolean[M + N];
+		for (int i = 0; i < distances.length; i++) {
+			if (i != start) {
+				distances[i] = Integer.MAX_VALUE;
+			}
+		}
+		HashSet<City> toVisit = new HashSet<City>();
+		toVisit.add(reducated[start]);
+		int temp;
+		City actual = null;
+		while (!toVisit.isEmpty()) {
+			temp = Integer.MAX_VALUE;
+			for (City c : toVisit) {
+				if (distances[c.index] < temp) {
+					temp = distances[c.index];
+					actual = c;
+				}
+			}
+			toVisit.remove(actual);
+			closed[actual.index] = true;
+
 			for (int[] edge : actual.edges) {
-				if (start != edge[0]) {
-					if (distances[edge[0]] == 0) {
+				if (!closed[edge[0]]) {
+					if (distances[edge[0]] > distances[actual.index] + edge[1]) {
 						distances[edge[0]] = distances[actual.index] + edge[1];
-						queve.add(reducated[edge[0]]);
-					} else if (distances[edge[0]] > distances[actual.index] + edge[1]) {
-						distances[edge[0]] = distances[actual.index] + edge[1];
+						toVisit.add(reducated[edge[0]]);
 					}
 				}
 			}
@@ -50,7 +64,7 @@ public class Main {
 			distances = findOysteredInDistance(oystered[i].index);
 			reducated[oystered[i].index] = new City(oystered[i].index);
 			for (int j = 0; j < distances.length; j++) {
-				if (distances[j] > 0 && cities[j].hasOyster) {
+				if (distances[j] < Integer.MAX_VALUE && distances[j] > 0 && cities[j].hasOyster) {
 					reducated[oystered[i].index].edges.add(new int[]{j, distances[j]});
 				}
 			}
@@ -59,18 +73,32 @@ public class Main {
 
 	public static int[] findOysteredInDistance(int start) {
 		int[] distances = new int[M + N];
-		LinkedList<City> queve = new LinkedList<City>();
-		queve.add(cities[start]);
-		City actual;
-		while (!queve.isEmpty()) {
-			actual = queve.poll();
+		boolean[] closed = new boolean[M + N];
+		for (int i = 0; i < distances.length; i++) {
+			if (i != start) {
+				distances[i] = Integer.MAX_VALUE;
+			}
+		}
+		HashSet<City> toVisit = new HashSet<City>();
+		toVisit.add(cities[start]);
+		int temp;
+		City actual = null;
+		while (!toVisit.isEmpty()) {
+			temp = Integer.MAX_VALUE;
+			for (City c : toVisit) {
+				if (distances[c.index] < temp) {
+					temp = distances[c.index];
+					actual = c;
+				}
+			}
+			toVisit.remove(actual);
+			closed[actual.index] = true;
+
 			for (int[] edge : actual.edges) {
-				if (start != edge[0] && distances[actual.index] + edge[1] <= F) {
-					if (distances[edge[0]] == 0) {
+				if (!closed[edge[0]]) {
+					if (F >= distances[actual.index] + edge[1] && distances[edge[0]] > distances[actual.index] + edge[1]) {
 						distances[edge[0]] = distances[actual.index] + edge[1];
-						queve.add(cities[edge[0]]);
-					} else if (distances[edge[0]] > distances[actual.index] + edge[1]) {
-						distances[edge[0]] = distances[actual.index] + edge[1];
+						toVisit.add(cities[edge[0]]);
 					}
 				}
 			}

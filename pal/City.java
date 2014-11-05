@@ -9,6 +9,7 @@ public class City {
 	public int index;
 	public HashSet<int[]> edges;
 	public boolean hasOyster = false;
+	public boolean visited = false;
 
 	public City() {
 		this.edges = new HashSet<int[]>();
