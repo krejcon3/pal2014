@@ -1,7 +1,7 @@
 package pal;
 
 import java.io.*;
-import java.util.HashSet;
+import java.util.PriorityQueue;
 import java.util.StringTokenizer;
 
 public class Main {
@@ -12,11 +12,12 @@ public class Main {
 	public static Node[] nodes;
 
     public static void main(String[] args) throws IOException {
-//        System.setIn(new FileInputStream("./src/test/6/pub05.in"));
+//        System.setIn(new FileInputStream("./src/test/6/pub07.in"));
 		read();
     }
 
 	public static void read() throws IOException {
+//		long startTime = System.currentTimeMillis();
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		String line;
 		StringTokenizer st;
@@ -30,30 +31,37 @@ public class Main {
 			st = new StringTokenizer(br.readLine());
 			words[i] = st.nextToken();
 		}
+//		long reading = System.currentTimeMillis();
 		nodes = new Node[N];
 		for (int i = 0; i < nodes.length; i++) {
 			nodes[i] = new Node(i);
 		}
+//		long setupNodes = System.currentTimeMillis();
 		for (int i = 0; i < words.length - 1; i++) {
 			for (int j = i + 1; j < words.length; j++) {
 				int levLng = getShortestLevenshteinDistance(words[i], words[j]);
 				if (levLng <= L) {
-					nodes[i].addEdge(j, 1);
-					nodes[j].addEdge(i, 1);
+					nodes[i].addChild(nodes[j]);
+					nodes[j].addChild(nodes[i]);
 				}
 			}
 		}
+//		long generate = System.currentTimeMillis();
 		int maybe = 0;
-		int[] lngs;
 		for (int i = 0; i < nodes.length; i++) {
-			lngs = dijkstra(i);
-			for (int l : lngs) {
-				if (maybe < l && l < Integer.MAX_VALUE) {
-					maybe = l;
+			dijkstra(i);
+			for (Node n : nodes) {
+				if (maybe < n.distance && n.distance < Integer.MAX_VALUE) {
+					maybe = n.distance;
 				}
 			}
 		}
+//		long dijkstra = System.currentTimeMillis();
 		System.out.println(maybe);
+//		System.out.println("Reading: " + (reading - startTime));
+//		System.out.println("Setup nodes: " + (setupNodes - reading));
+//		System.out.println("Generate graph: " + (generate - setupNodes));
+//		System.out.println("Dijkstra: " + (dijkstra - generate));
 	}
 
 	/*
@@ -89,38 +97,25 @@ public class Main {
 		return cost[textLength - 1];
 	}
 
-	public static int[] dijkstra(int start) {
-		int[] distances = new int[N];
-		boolean[] closed = new boolean[N];
-		for (int i = 0; i < distances.length; i++) {
-			if (i != start) {
-				distances[i] = Integer.MAX_VALUE;
-			}
+	public static void dijkstra(int start) {
+		for (int i = 0; i < nodes.length; i++) {
+			nodes[i].distance = Integer.MAX_VALUE;
 		}
-		HashSet<Node> toVisit = new HashSet<Node>();
-		toVisit.add(nodes[start]);
-		int temp;
-		Node actual = null;
-		while (!toVisit.isEmpty()) {
-			temp = Integer.MAX_VALUE;
-			for (Node c : toVisit) {
-				if (distances[c.index] < temp) {
-					temp = distances[c.index];
-					actual = c;
-				}
-			}
-			toVisit.remove(actual);
-			closed[actual.index] = true;
+		nodes[start].distance = 0;
 
-			for (int[] edge : actual.edges) {
-				if (!closed[edge[0]]) {
-					if (distances[edge[0]] > distances[actual.index] + edge[1]) {
-						distances[edge[0]] = distances[actual.index] + edge[1];
-						toVisit.add(nodes[edge[0]]);
-					}
+		PriorityQueue<Node> queve = new PriorityQueue<Node>();
+		queve.add(nodes[start]);
+
+		while(!queve.isEmpty()) {
+			Node node = queve.poll();
+
+			for (Node child : node.childs) {
+				if (node.distance + 1 < child.distance) {
+					queve.remove(child);
+					child.distance = node.distance + 1;
+					queve.add(child);
 				}
 			}
 		}
-		return distances;
 	}
 }
