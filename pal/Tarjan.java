@@ -9,6 +9,7 @@ public class Tarjan {
 	public int maxTotal = 0;
 	private ArrayList<Node> nodes;
 	private long possible = 0;
+	private long maximum;
 
 
 	public Tarjan(int pointCount, ArrayList<Node> nodes) {
@@ -23,24 +24,26 @@ public class Tarjan {
 		this.maxTotal = 0;
 	}
 
-	public void run(int[] edge, long possible) {
+	public void run(int[] edge, long possible, long maximum) {
+		this.maximum = maximum;
 		this.possible = possible;
 		this.resetData();
-		nodes.get(edge[1]).addChild(nodes.get(edge[0]));
-		nodes.get(edge[0]).childs.remove(nodes.get(edge[1]));
-		for (int i = 0; i < this.pointCount; i++) {
+		Node start = nodes.get(edge[1]);
+		Node end = nodes.get(edge[0]);
+		start.addChild(end);
+		end.childs.remove(start);
+		for (Node no : this.nodes) {
 			this.stackTop = null;
 			this.index = 0;
-			Node no = this.nodes.get(i);
 			if (no.index == 0) {
 				this.find_scc(no);
-				if (this.possible < this.maxTotal) {
+				if (this.possible < this.maxTotal || this.possible <= this.maximum) {
 					break;
 				}
 			}
 		}
-		nodes.get(edge[0]).addChild(nodes.get(edge[1]));
-		nodes.get(edge[1]).childs.remove(nodes.get(edge[0]));
+		end.addChild(start);
+		start.childs.remove(end);
 		for (Node n : this.nodes) {
 			n.reset();
 		}
@@ -66,7 +69,7 @@ public class Tarjan {
 		for (Node child : n.childs) {
 			if (child.index == 0) {
 				this.find_scc(child);
-				if (this.possible < this.maxTotal) {
+				if (this.possible < this.maxTotal || this.possible + this.maxTotal <= this.maximum) {
 					return this.maxTotal;
 				}
 				n.lowlink = Math.min(n.lowlink, child.lowlink);
@@ -81,16 +84,16 @@ public class Tarjan {
 			while (this.stackTop != null) {
 				x = this.pop(this.stackTop);
 				total += x.weight;
+				this.possible -= x.weight;
 				ccount++;
 				if (x.index == x.lowlink) {
 					break;
 				}
 			}
 			if (ccount > 2 && this.maxTotal < total) {
-				this.possible -= total;
 				this.maxTotal = total;
 			}
-			if (this.possible < this.maxTotal) {
+			if (this.possible < this.maxTotal || this.possible + this.maxTotal <= this.maximum) {
 				return this.maxTotal;
 			}
 		}

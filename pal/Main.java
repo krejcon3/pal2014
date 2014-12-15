@@ -26,7 +26,7 @@ public class Main {
 	public static void work() {
 		Tarjan tarjan = new Tarjan(N, nodes);
 		for (int[] tryEdge : edges) {
-			tarjan.run(tryEdge, possible);
+			tarjan.run(tryEdge, possible, maximum);
 			if (tarjan.maxTotal > maximum) {
 				maximum = tarjan.maxTotal;
 				edge = tryEdge;
@@ -56,15 +56,15 @@ public class Main {
 		}
 
 		edges = new ArrayList<int[]>();
-		int start;
-		int end;
+		Node start;
+		Node end;
 		for (int i = 0; i < M; i++) {
 			st = new StringTokenizer(br.readLine());
-			start = Integer.parseInt(st.nextToken());
-			end = Integer.parseInt(st.nextToken());
-			nodes.get(start).addChild(nodes.get(end));
-			nodes.get(start).childCount++;
-			nodes.get(end).parentCount++;
+			start = nodes.get(Integer.parseInt(st.nextToken()));
+			end = nodes.get(Integer.parseInt(st.nextToken()));
+			start.addChild(end);
+			start.childCount++;
+			end.parentCount++;
 		}
 		for (Node n : nodes) {
 			if (n.childCount > 1) {
