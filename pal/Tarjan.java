@@ -8,6 +8,7 @@ public class Tarjan {
 	private int pointCount;
 	public int maxTotal = 0;
 	private ArrayList<Node> nodes;
+	private long possible = 0;
 
 
 	public Tarjan(int pointCount, ArrayList<Node> nodes) {
@@ -22,16 +23,20 @@ public class Tarjan {
 		this.maxTotal = 0;
 	}
 
-	public void run(int[] edge) {
+	public void run(int[] edge, long possible) {
+		this.possible = possible;
 		this.resetData();
 		nodes.get(edge[1]).addChild(nodes.get(edge[0]));
 		nodes.get(edge[0]).childs.remove(nodes.get(edge[1]));
-		for (int i = 1; i <= this.pointCount; i++) {
+		for (int i = 0; i < this.pointCount; i++) {
 			this.stackTop = null;
 			this.index = 0;
-			Node no = this.nodes.get(i - 1);
+			Node no = this.nodes.get(i);
 			if (no.index == 0) {
 				this.find_scc(no);
+				if (this.possible < this.maxTotal) {
+					break;
+				}
 			}
 		}
 		nodes.get(edge[0]).addChild(nodes.get(edge[1]));
@@ -54,13 +59,16 @@ public class Tarjan {
 		return n;
 	}
 
-	private void find_scc(Node n) {
+	private int find_scc(Node n) {
 		n.index = ++this.index;
 		n.lowlink = n.index;
 		this.push(n);
 		for (Node child : n.childs) {
 			if (child.index == 0) {
 				this.find_scc(child);
+				if (this.possible < this.maxTotal) {
+					return this.maxTotal;
+				}
 				n.lowlink = Math.min(n.lowlink, child.lowlink);
 			} else if (child.instack) {
 				n.lowlink = Math.min(n.lowlink, child.index);
@@ -78,9 +86,14 @@ public class Tarjan {
 					break;
 				}
 			}
-			if (ccount > 2 && maxTotal < total) {
-				maxTotal = total;
+			if (ccount > 2 && this.maxTotal < total) {
+				this.possible -= total;
+				this.maxTotal = total;
+			}
+			if (this.possible < this.maxTotal) {
+				return this.maxTotal;
 			}
 		}
+		return 0;
 	}
 }
